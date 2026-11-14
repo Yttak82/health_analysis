@@ -9,3 +9,8 @@ __pycache__/
 *.pyc
 
 # Environment variables
+.evn
+.env.*
+
+#Ruff cache
+.ruff_cache/
