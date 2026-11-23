@@ -241,17 +241,31 @@ def calculate_simple_regression(df, column):
     return model, X, y
 
 
-def calculate_multiple_regression(df):
+def calculate_multiple_regression(df, predictors=None):
     """Fit a multiple linear regression using selected predictors."""
-    columns = ["age", "weight", "smoker", "systolic_bp"]
+
+    if predictors is None:
+        predictors = ["age", "weight", "smoker"]
+
+    columns = predictors + ["systolic_bp"]
+
     data = df[columns].dropna().copy()
 
-    data["smoker"] = data["smoker"].map({"No":0, "Yes":1})
-   
-    X = data[["age", "weight", "smoker"]].to_numpy()
+    binary_columns = {
+            "sex":{"F":0, "M":1},
+            "smoker":{"No":0, "Yes":1}
+        }
+    for column, mapping in binary_columns.items():
+        if column in predictors: 
+            data[column] = data[column].map(mapping)
+
+            if data[column].isna().any():
+                raise ValueError(f"Unexpected category in {column}")
+
+    X = data[predictors].to_numpy()
     y = data["systolic_bp"].to_numpy()
 
-    model =LinearRegression()
+    model = LinearRegression()
     model.fit(X, y)
 
     return model, X, y

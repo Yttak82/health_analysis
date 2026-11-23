@@ -125,9 +125,9 @@ class HealthAnalyzer:
         "Fit  a simple linear regression for a selected predictor."
         return calculate_simple_regression(self.df, column)
     
-    def multiple_regression(self):
-        "Fit multiple linear reggression for systolic blood pressure."
-        return calculate_multiple_regression(self.df)
+    def multiple_regression(self, predictors=None):
+        "Fit multiple linear reggression using selected predictors."
+        return calculate_multiple_regression(self.df, predictors)
 
     def regression_by_sex(self):
         """Fit a regression model including sex as an explanatory variabel"""
