@@ -1,4 +1,4 @@
-from src.metrics import calculate_simple_regression, calculate_power_simulation, calculate_welch_test, calculate_bootstrap_ci, calculate_bootstrap_stability, calculate_bootstrap_means, calculate_normal_ci, calculate_disease_difference, calculate_disease_rate, simulate_disease_group, calculate_smoking_stats, calculate_weight_by_sex, calculate_metrics, calculate_histogram, calculate_smoker_bp_stats, calculate_smoking_sex_interaction,  calculate_multiple_regression, calculate_regression_by_sex, calculate_regression_with_cholesterol
+from src.metrics import calculate_regression_cv, evaluate_regression_model, calculate_standardized_coefficients, calculate_simple_regression, calculate_power_simulation, calculate_welch_test, calculate_bootstrap_ci, calculate_bootstrap_stability, calculate_bootstrap_means, calculate_normal_ci, calculate_disease_difference, calculate_disease_rate, simulate_disease_group, calculate_smoking_stats, calculate_weight_by_sex, calculate_metrics, calculate_histogram, calculate_smoker_bp_stats, calculate_smoking_sex_interaction,  calculate_multiple_regression, calculate_regression_by_sex, calculate_regression_with_cholesterol
 from src.viz import plot_age_vs_bp, plot_weight_vs_bp
 from src.config import SEX_COLUMN, SMOKER_COLUMN, EXPECTED_DATATYPES
 from src.data import check_unique_ids, validate_data, count_missing_values, validate_column_type
@@ -148,3 +148,21 @@ class HealthAnalyzer:
     def plot_weight_vs_bp(self):
         """Visualiseze the relationship between weight and systolic blood pressure."""
         return plot_weight_vs_bp(self.df)
+
+    def standardized_coefficients(self, model,X , y):
+        """Return standardized regression coefficients."""
+        return calculate_standardized_coefficients(model, X, y)
+
+    def evaluate_regression(self, predictors, test_size=0.2, seed=42):
+        """Evaluate regression on training and test data."""
+
+        _, X, y = self.multiple_regression(predictors)
+
+        return evaluate_regression_model(X, y, test_size=test_size, seed=seed)
+
+    def regression_cross_validation(self, predictors, n_splits=5, seed=42):
+        """Evaluate regression using k-fold cross-validation."""
+
+        _, X, y = self.multiple_regression(predictors)
+
+        return calculate_regression_cv(X, y, n_splits=n_splits, seed=seed)

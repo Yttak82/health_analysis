@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split, KFold, cross_validate
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 def calculate_metrics(df, column):
     """Calculate descriptive statistics for a column."""
@@ -314,3 +316,46 @@ def calculate_smoking_sex_interaction(df):
     model =smf.ols("systolic_bp ~ age +weight +smoker_num + male+ smoker_male", data=data).fit()
 
     return model
+
+
+def calculate_standardized_coefficients(model, X, y):
+    """Calculate standardized regression coefficients."""
+
+    x_std = np.std(X, axis=0)
+    y_std =np.std(y)
+
+    if y_std == 0 or np.any(x_std == 0):
+
+        raise ValueError("Cannot standardize constant variabled")
+
+    return model.coef_ * x_std / y_std
+
+def evaluate_regression_model(X, y, test_size=0.2, seed=42):
+    """Evaluate linear regression using training and test data."""
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=test_size,
+        random_state=seed
+    )
+
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+
+    y_pred = model.predict(X_test)
+
+    return {
+        "Train R^2": model.score(X_train, y_train),
+          "Test R^2": model.score(X_test, y_test), 
+          "MAE": mean_absolute_error(y_test, y_pred),
+          "RMSE": np.sqrt(mean_squared_error(y_test, y_pred)),
+          "Train antal": len(y_train), "Test antal": len(y_test)}
+
+def calculate_regression_cv(X, y, n_splits=5, seed=42):
+    """Evaluate linear regression using K-fold cross-validation."""
+
+    kfold = KFold(n_splits=n_splits, shuffle=True, random_state=seed)
+    scores = cross_validate(LinearRegression(), X, y, cv=kfold, scoring={"r2":"r2", "mae": "neg_mean_absolute_error","rmse": "neg_root_mean_squared_error"})
+
+    return {"CV R^2": scores["test_r2"].mean(),
+            "CV R^2 std": scores["test_r2"].std(),
+            "CV MAE":-scores["test_mae"].mean(),
+            "CV RMSE": -scores["test_rmse"].mean()}

@@ -397,3 +397,43 @@ def plot_bp_overview(df):
                    fontweight="bold")
 
       return fig, axes
+
+def plot_standardized_coefficients(coefficients):
+      """Compare standardized coefficients across regression models."""
+      fig, ax = plt.subplots(figsize=(10, 6))
+
+      variables = list(coefficients.index)
+      n_models = len(coefficients.columns)
+
+      for i, model_name in enumerate(coefficients.columns):
+          values = coefficients[model_name].dropna()
+
+          offset = (i-(n_models - 1) / 2) * 0.22
+          y_positions = [variables.index(variable) + offset for variable in values.index]
+
+          ax.scatter(values, y_positions, s=70, label=model_name)
+
+      labels = {
+        "age": "Ålder",
+        "cholesterol": "Kolesterol",
+        "weight": "Vikt",
+        "sex": "Kön",
+        "smoker": "Rökstatus",
+        "height": "Längd"
+        }
+
+      ax.set_yticks(range(len(variables)))
+      ax.set_yticklabels([labels.get(variable, variable)
+                            for variable in variables])
+      ax.invert_yaxis()
+      ax.axvline(0, color="gray", linestyle="--", alpha=0.7)
+
+      ax.set_xlabel("Standardiserad regressionskoefficient (beta)")
+      ax.set_title("Samband med systoliskt blodtryck\n"" Standardiserade koefficienter i tre regressionsmodeller.", fontweight="bold")
+      ax.set_ylabel("Variabel")
+      ax.grid(axis="x", alpha=0.3)
+      ax.legend(title="Regressionsmodell", loc="lower right")
+      fig.text(0.5, 0.02, "Varje punkt visar en variabels koefficient i en modell.\n""Höger om noll = positivt samband"   "Vänster om noll = negativt samband", ha="center", fontsize=9)
+      fig.tight_layout(rect=(0, 0.12, 1, 1))
+
+      return fig, ax
