@@ -437,3 +437,152 @@ def plot_standardized_coefficients(coefficients):
       fig.tight_layout(rect=(0, 0.12, 1, 1))
 
       return fig, ax
+
+def plot_pca_variance(pca):
+    """Plot explained variance of PCA components."""
+    variance = pca.explained_variance_ratio_ * 100
+    components = [f"PC{i + 1}" for i in range(len(variance))]
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+
+    ax.bar(components, variance, color="steelblue")
+
+    for i, value in enumerate(variance):
+            ax.text(i, value + 0.5, f"{value:.1f}%", ha="center")
+
+    ax.set_title("Förklarad varians per huvudkomponent")
+    ax.set_xlabel("Huvudkomponent")
+        
+    ax.set_ylabel("Förklarad varians (%)")
+    ax.grid(axis="y", alpha=0.3)
+    ax.set_ylim(0, max(variance) * 1.15)
+                                    
+        
+    fig.tight_layout()
+    return fig, ax
+
+def plot_pca_scores(X_pca, pca):
+    """Visualize observations using the first two PCA components."""
+
+    fig, ax = plt.subplots(figsize=(9,6))
+
+    ax.scatter(X_pca[:, 0], X_pca[:, 1], alpha=0.5, s=25, color="steelblue")
+
+    variance = pca.explained_variance_ratio_ * 100
+    ax.set_title("Observationer i PCA-rummet")
+
+    ax.set_xlabel(f"PC1 ({variance[0]:.1f}% förklarad varians)")
+    ax.set_ylabel(f"PC2 ({variance[0]:.1f}% förklarad varians)")
+
+    ax.axhline(0, color="gray", alpha=0.4)
+    ax.axvline(0, color="gray", alpha=0.4)
+
+    ax.grid(alpha=0.2)
+
+    fig.tight_layout()
+
+    return fig, ax
+
+def plot_pca_by_sex(X_pca, pca, sex):
+    """Visualize PCA observations grouped by sex."""
+
+    fig, ax = plt.subplots(figsize=(9,6))
+
+    groups = [
+          ("F", "Kvinnor", "darkorange"),
+          ("M", "Män", "steelblue")
+    ]
+
+    for category, label, color in groups:
+        mask = sex == category
+ 
+        ax.scatter(X_pca[mask, 0], X_pca[mask, 1], alpha=0.5, s=25, color=color, label=label)
+
+    variance = pca.explained_variance_ratio_ * 100
+    ax.set_title("PCA - fördelning efter kön")
+
+    ax.set_xlabel(f"PC1 ({variance[0]:.1f}% förklarad varians)")
+    ax.set_ylabel(f"PC2 ({variance[1]:.1f}% förklarad varians)")
+
+    ax.axhline(0, color="gray", alpha=0.4)
+    ax.axvline(0, color="gray", alpha=0.4)
+
+    ax.grid(alpha=0.2)
+    ax.legend(title="Kön")
+    fig.tight_layout()
+
+    return fig, ax
+
+def plot_pca_by_smoker(X_pca, pca, smoker):
+    """Visualize PCA observations grouped by rökningstatus."""
+
+    fig, ax = plt.subplots(figsize=(9,6))
+
+    groups = [
+          ("Yes", "Rökare", "darkorange"),
+          ("No", "Icke-rökare", "steelblue")
+    ]
+
+    for category, label, color in groups:
+        mask = smoker == category
+ 
+        ax.scatter(X_pca[mask, 0], X_pca[mask, 1], alpha=0.5, s=25, color=color, label=label)
+
+    variance = pca.explained_variance_ratio_ * 100
+    ax.set_title("PCA - fördelning efter rökstatus")
+
+    ax.set_xlabel(f"PC1 ({variance[0]:.1f}% förklarad varians)")
+    ax.set_ylabel(f"PC2 ({variance[1]:.1f}% förklarad varians)")
+
+    ax.axhline(0, color="gray", alpha=0.4)
+    ax.axvline(0, color="gray", alpha=0.4)
+
+    ax.grid(alpha=0.2)
+    ax.legend(title="Rökstatus")
+    fig.tight_layout()
+
+    return fig, ax
+
+
+def plot_pca_biplot(X_pca, pca, columns):
+    """Visualize PCA scores and variable directions."""
+ 
+    fig, ax = plt.subplots(figsize=(10, 7))
+
+    ax.scatter(X_pca[:, 0], X_pca[:, 1], alpha=0.25, s=20, color="steelblue")
+
+    loadings = pca.components_[:2, :].T
+    scale = (0.65 * np.percentile(np.abs(X_pca[:, :2]), 95) / np.max(np.abs(loadings)))
+    labels = {
+            "age": "Ålder",
+            "cholesterol": "Kolesterol",
+            "weight": "Vikt",
+            "systolic_bp": "Systoliskt blodtryck",
+            "height": "Längd"
+            }
+    for i, column in enumerate(columns):
+        x = loadings[i, 0] * scale
+        y = loadings[i, 1] * scale
+
+        ax.annotate("", xy=(x, y),
+                    xytext=(0, 0),
+                    arrowprops=dict(arrowstyle="->", color="firebrick", lw=2,))
+        ax.text(x * 1.12, y * 1.12, labels.get(column, column),
+                color="firebrick",
+                ha ="center", fontsize=10)
+    variance = pca.explained_variance_ratio_ * 100
+    ax.set_title("PCA - biplot - observationer och variabler")
+ 
+    ax.set_xlabel(f"PC1 ({variance[0]:.1f}% förklarad varians)")
+    ax.set_ylabel(f"PC2 ({variance[1]:.1f}% förklarad varians)")
+ 
+    ax.axhline(0, color="gray", alpha=0.4)
+    ax.axvline(0, color="gray", alpha=0.4)
+ 
+    ax.grid(alpha=0.2)
+    
+    fig.tight_layout()
+ 
+    return fig, ax
+ 
+      

@@ -4,6 +4,8 @@ from scipy import stats
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split, KFold, cross_validate
 from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 
 def calculate_metrics(df, column):
     """Calculate descriptive statistics for a column."""
@@ -359,3 +361,16 @@ def calculate_regression_cv(X, y, n_splits=5, seed=42):
             "CV R^2 std": scores["test_r2"].std(),
             "CV MAE":-scores["test_mae"].mean(),
             "CV RMSE": -scores["test_rmse"].mean()}
+
+def calculate_pca(df, columns):
+    """Perform PCA on selected numerical variables."""
+
+    data = df[columns].dropna().copy()
+
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(data)
+
+    pca = PCA()
+    X_pca = pca.fit_transform(X_scaled)
+
+    return pca, X_pca, data.index
