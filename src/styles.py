@@ -60,6 +60,7 @@ def setup_plot_style():
 })
 
 def style_axis(axis, grid_axis="y"):
+    "Apply consistent grid and spine styling"
     axis.grid(axis=grid_axis, linewidth=0.5, alpha=0.5)
     axis.spines["left"].set_alpha(0.7)
     axis.spines["bottom"].set_alpha(0.7)

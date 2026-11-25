@@ -2,17 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from src.styles import style_axis
 
-def plot_histogram(
-    ax,
-    bin_centers,
-    values,
-    bin_width,
-    color,
-    ylabel,
-    title,
-    mean,
-    median,
-):
+def plot_histogram(ax, bin_centers, values, bin_width, color, ylabel, title, mean, median,):
+    "Plot a blood pressure histograf with summary statistics, inkludes reference lines for the mean and median, a shaded blood pressure interval"
     ax.bar(
         bin_centers,
         values,
@@ -52,15 +43,8 @@ def plot_histogram(
     ax.grid(axis="y", alpha=0.3)
 
 
-def plot_boxplot(
-    ax,
-    weight_groups,
-    weight_labels,
-    sex_column,
-    sex_colors,
-    colors,
-    median_weight_by_sex,
-):
+def plot_boxplot(ax, weight_groups, weight_labels, sex_column, sex_colors, colors, median_weight_by_sex,):
+    """Plot weight distributions by sex using boxplots"""
     weight_box = ax.boxplot(
         weight_groups,
         patch_artist=True,
@@ -105,12 +89,11 @@ def plot_boxplot(
             )
 
             ax.set_yticks(range(0, 131, 10))
+
                
-def plot_smoking_status(ax,
-                        smoking_all_counts,
-                        smoker_column,
-                        smoking_colors,
-                        colors):
+def plot_smoking_status(ax, smoking_all_counts, smoker_column, smoking_colors, colors):
+     """Plot the distribution of smoking status in the dataset - displays counts and percentages for smokers and non-smokers.
+        Arg: smoking_all_counts - number of people in each smoking category"""
      smoking_labels = {
           "No": "Icke-rökare",
           "Yes": "Rökare",
@@ -148,15 +131,8 @@ def plot_smoking_status(ax,
                )
 
 
-def plot_smoking_by_sex(
-          axes, 
-          smoking_counts,
-          smoking_perc,
-          sex_column,
-          smoker_column,
-          smoking_colors,
-          colors,
-):
+def plot_smoking_by_sex(axes, smoking_counts, smoking_perc, sex_column, smoker_column, smoking_colors, colors,):
+     """Plot smoking status distributions separetly by sex, two charts show absolute counts and percentages within each sex category"""
      smoking_labels = {
           "No": "Icke-rökare",
           "Yes": "Rökare",
@@ -201,13 +177,12 @@ def plot_smoking_by_sex(
                axis.set_xlim(0, 105 if is_percent else float(table.sum(axis=1).max()) * 1.08)
 
 
-def plot_bootstrap_stability(
-              ax,
-              bootstrap_check_sizes,
-              bootstrap_ci_changes,
-              stop_at,
-              colors
-    ):
+def plot_bootstrap_stability(ax, bootstrap_check_sizes, bootstrap_ci_changes, stop_at, colors):
+    """Vizualize the stability of bootstrap confidence intervals - shows chenges in interval bounds and marks the stability tolerance and suggested stopping point
+        Args:bootstrap_check_sizes -  Numbers of bootstrap samples evaluated.
+            bootstrap_ci_changes - Changes in confidence interval bounds between consecutive evaluations.
+            stop_at - Suggested stopping point, or None if not reached.
+        """
     ax.scatter(
         bootstrap_check_sizes[1:],
         bootstrap_ci_changes,
@@ -302,9 +277,13 @@ def plot_cholesterol_vs_bp(df):
       plt.show()
 
 def plot_regression_predictions(y_true, y_pred):
-              
-    fig, ax = plt.subplots(figsize=(7,6)
-    )
+    """Compare observed and predicted blood pressure values, includes a diagonal reference line
+        representing perfect predictions.
+
+        Args: y_true - Observed systolic blood pressure values.
+              y_pred - Blood pressure values predicted by the model.
+        """
+    fig, ax = plt.subplots(figsize=(7,6))
     ax.scatter(
         y_true, y_pred, alpha=0.4, color="steelblue")
     minimum = min(y_true.min(), y_pred.min())
@@ -334,15 +313,21 @@ def plot_regression_predictions(y_true, y_pred):
 def plot_bp_relationship(ax, df, column, xlabel, categories=None):
     """Plot systolic blood pressure by a numeric och categorical variable."""
 
-    data = df[[column, "systolic_bp"]].dropna()
-
+    data =df[[column, "systolic_bp"]].dropna()
     if categories is None:
-                ax.scatter(
-                    data[column],
-                    data["systolic_bp"],
-                    alpha=0.4,
-                    color="steelblue"
-                    )
+                
+                    
+                x = data[column].to_numpy()
+                y= data["systolic_bp"].to_numpy()
+                ax.scatter( x, y,                
+                                alpha=0.4,
+                                color="steelblue"
+                                )
+                slope, intercept = np.polyfit(x, y, 1)
+                x_line = np.linspace(x.min(), x.max(), 100)
+                y_line = slope * x_line + intercept
+                ax.plot(x_line, y_line, color ="firebrick", linewidth= 2, label="linjär regressionlinje"), 
+                
     else:
                 groups = [data.loc[
                     data[column] == category,
@@ -472,7 +457,7 @@ def plot_pca_scores(X_pca, pca):
     ax.set_title("Observationer i PCA-rummet")
 
     ax.set_xlabel(f"PC1 ({variance[0]:.1f}% förklarad varians)")
-    ax.set_ylabel(f"PC2 ({variance[0]:.1f}% förklarad varians)")
+    ax.set_ylabel(f"PC2 ({variance[1]:.1f}% förklarad varians)")
 
     ax.axhline(0, color="gray", alpha=0.4)
     ax.axvline(0, color="gray", alpha=0.4)

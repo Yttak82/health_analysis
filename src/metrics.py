@@ -34,6 +34,7 @@ def calculate_metrics(df, column):
         "se": se,
     }
 
+
 def calculate_histogram(values, bins):
     """Calculate histogram counts and percentages."""
     counts, _ = np.histogram(values, bins=bins)
@@ -41,6 +42,7 @@ def calculate_histogram(values, bins):
     centers = (bins[:-1] + bins[1:]) / 2
 
     return counts, percentages, centers
+
 
 def calculate_weight_by_sex(df, sex_column):
     """Prepere weight groups and median weights by sex."""
@@ -76,17 +78,24 @@ def calculate_smoking_stats(df, sex_column, smoker_column):
 
 def calculate_disease_rate(df):
     """Calculate the proportion of people with disease."""
+   
     return df["disease"].mean()
 
 
 def simulate_disease_group(disease_rate, group_size, seed):
-    
+    """Simulate disasease status for a group using a binomial disytribution.
+        Arg: disease_rate - probability of disease in the population
+        Returns : Proportion of simulated people with disease"""
     rng_disease = np.random.default_rng(seed)
     simulated_objects = rng_disease.binomial(1, disease_rate, size=group_size)
+    
     return simulated_objects.mean()
 
+
 def calculate_disease_difference(disease_rate, simulated_rate):    
-    
+    """Calculate the differense between simulated ond observed disease rates.
+    Args:   disease_rate: Observed disease proportion
+            simulated_rate: simulated disease proportion"""
     return simulated_rate - disease_rate
 
 
@@ -94,31 +103,47 @@ def calculate_normal_ci(bp_mean, bp_se, alpha):
     """Calculate a confidence interval using normal approximation"""
     normal_margin = stats.norm.ppf(1 - alpha / 2) * bp_se
     normal_ci = (bp_mean -normal_margin, bp_mean + normal_margin) 
+    
     return normal_margin, normal_ci
 
-def calculate_bootstrap_means(bp_values, n_bootstrap, batch_size, seed):
 
+def calculate_bootstrap_means(bp_values, n_bootstrap, batch_size, seed):
+    """Generate bootstrap sample means from blood pressure values.
+        Args:   bp_values:Orginal blood pressure observations
+                n_bootstrap: number of bootstrap per batch
+                batch_size: Number of samples processed per batch """
     rng_bootstrap =np.random.default_rng(seed)
     bp_array = bp_values.to_numpy()
     bootstrap_means= np.empty(n_bootstrap, dtype=float)
     bootstrap_batch_size = batch_size
+    
     for batch_start in range(0, n_bootstrap, bootstrap_batch_size):
         batch_end = min(batch_start + bootstrap_batch_size, n_bootstrap)
         samples = rng_bootstrap.choice(bp_array, size=(batch_end - batch_start, len(bp_array)), replace=True)
         bootstrap_means[batch_start:batch_end] = samples.mean(axis=1)
+    
     return bootstrap_means
+
 
 def calculate_bootstrap_ci(bootstrap_means, alpha):
     """Calculate bootstrap confidence interval."""
+    
     return tuple(np.percentile(bootstrap_means, [100 * alpha / 2, 100 * (1 - alpha / 2)]))
 
 
-def calculate_bootstrap_stability(
-        bootstrap_means,
-        alpha,
-        bootstrap_start,
-        n_bootstrap,
-        bootstrap_step):
+def calculate_bootstrap_stability(bootstrap_means, alpha, bootstrap_start, n_bootstrap, bootstrap_step):
+    """Evaluate the stability of bootstrap confidence intervals.
+        Args: bootstrap_means - Previously calculated bootstrap means.
+            alpha - Significance level used for the confidence interval.
+            bootstrap_start - Initial number of bootstrap samples.
+            n_bootstrap - Maximum number of bootstrap samples.
+            bootstrap_step - Increase in sample size between checks.
+        Returns:
+            Tuple containing sample sizes, lower and upper confidence
+            bounds, changes between consecutive intervals, and the
+            first sample size meeting the stability criterion.
+            The final value is None if stability is not reached.
+    """
 
     bootstrap_check_sizes = list(range(bootstrap_start, n_bootstrap, bootstrap_step))
 
@@ -149,6 +174,7 @@ def calculate_bootstrap_stability(
         if all(change <= tolerance for change in recent_changes):
             stop_at = bootstrap_check_sizes[i]
             break
+    
     return (
     bootstrap_check_sizes,
     bootstrap_lower_bounds,
@@ -176,23 +202,25 @@ def calculate_smoker_bp_stats(df):
         smoker_fraction,
     )
 
+
 def calculate_welch_test(smoker_bp, no_smoker_bp):
     """One-sided Welch t-test."""
     return stats.ttest_ind(smoker_bp, no_smoker_bp, equal_var=False, alternative="greater")
 
 
-def calculate_power_simulation(
-        smoker_fraction,
-        smoker_mean,
-        smoker_std,
-        non_smoker_mean,
-        non_smoker_std,
-        sample_sizes,
-        n_power_sim,
-        alpha,
-        seed,
-        batch_size=250,      
-):
+def calculate_power_simulation(smoker_fraction, smoker_mean, smoker_std, non_smoker_mean, non_smoker_std, sample_sizes, n_power_sim,
+        alpha, seed, batch_size=250,):
+        """Estimate statistical power using simulated Welch t-tests.
+
+        Args: smoker_fraction - Proportion of smokers in the sample.
+            sample_sizes - Total sample sizes to evaluate.
+            n_power_sim - Number of simulations per sample size.
+            alpha - Significance level for rejecting the null hypothesis.
+            batch_size - Number of simulations processed per batch.
+        Returns:
+            DataFrame containing sample sizes, group sizes, and
+            estimated statistical power for the one-sided Welch test.
+        """
         rng_power = np.random.default_rng(seed)
         power_rows = []
         power_batch_size = batch_size
@@ -222,6 +250,7 @@ def calculate_power_simulation(
             })
 
         return pd.DataFrame(power_rows)
+
 
 def calculate_simple_regression(df, column):
     "Fit a simple linear regression for a numeric predictor."
@@ -274,6 +303,7 @@ def calculate_multiple_regression(df, predictors=None):
 
     return model, X, y
 
+
 def calculate_regression_by_sex(df):
     """Fit a multiple linear regression model for systolic blood pressure."""
     columns = ["age", "weight", "smoker", "sex", "systolic_bp"]
@@ -307,6 +337,7 @@ def calculate_regression_with_cholesterol(df):
 
     return model, X, y
 
+
 def calculate_smoking_sex_interaction(df):
     """Test whether the smoking-BP association differs by sex."""
     import statsmodels.formula.api as smf
@@ -332,6 +363,7 @@ def calculate_standardized_coefficients(model, X, y):
 
     return model.coef_ * x_std / y_std
 
+
 def evaluate_regression_model(X, y, test_size=0.2, seed=42):
     """Evaluate linear regression using training and test data."""
     X_train, X_test, y_train, y_test = train_test_split(
@@ -351,6 +383,7 @@ def evaluate_regression_model(X, y, test_size=0.2, seed=42):
           "RMSE": np.sqrt(mean_squared_error(y_test, y_pred)),
           "Train antal": len(y_train), "Test antal": len(y_test)}
 
+
 def calculate_regression_cv(X, y, n_splits=5, seed=42):
     """Evaluate linear regression using K-fold cross-validation."""
 
@@ -361,6 +394,7 @@ def calculate_regression_cv(X, y, n_splits=5, seed=42):
             "CV R^2 std": scores["test_r2"].std(),
             "CV MAE":-scores["test_mae"].mean(),
             "CV RMSE": -scores["test_rmse"].mean()}
+
 
 def calculate_pca(df, columns):
     """Perform PCA on selected numerical variables."""
