@@ -4,15 +4,19 @@ import matplotlib.pyplot as plt
 COLORS = {
     "blood_pressure": "#65758B",
     "blood_pressure_light": "#8CACDA",
-    "non_smoker": "#446A79",
-    "smoker": "#82644B",
-    "female": "#96C996",
-    "male": "#578A57",
+    "non_smoker": "#5F4763",
+    "smoker": "#AE703C",
+    "female": "#52CC52",
+    "male": "#E1D26D",
     "reference": "#153D1E",
     "reference_m": "#34EB71",
     "ink": "#202020",
     "muted": "#595959",
     "text": "#E5FAC4",
+    "regression_line": "#371D24",
+    "pca_primary": "#7AB3E2",
+    "pca_loading": "#D85656",
+    "pca_reference": "#808080"
 }
 
 SMOKING_COLORS = {

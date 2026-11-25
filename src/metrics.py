@@ -6,6 +6,8 @@ from sklearn.model_selection import train_test_split, KFold, cross_validate
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
+from src.config import BP_COLUMN, BINARY_MAPPINGS
+
 
 def calculate_metrics(df, column):
     """Calculate descriptive statistics for a column."""
@@ -44,24 +46,24 @@ def calculate_histogram(values, bins):
     return counts, percentages, centers
 
 
-def calculate_weight_by_sex(df, sex_column):
+def calculate_weight_by_sex(df, sex_categories):
     """Prepere weight groups and median weights by sex."""
     
     weight_groups = [
-        df.loc[df["sex"] == sex, "weight"].dropna() for sex in sex_column]
+        df.loc[df["sex"] == sex, "weight"].dropna() for sex in sex_categories]
     median_weight_by_sex = df.groupby("sex")["weight"].median()
 
     return weight_groups, median_weight_by_sex
 
 
-def calculate_smoking_stats(df, sex_column, smoker_column):
+def calculate_smoking_stats(df, sex_categories, smoking_categories):
     """Calculate smoking counts and percentages."""
 
     smoking_counts = pd.crosstab(df["sex"],
                                 df["smoker"],
                                 ).reindex(
-                                    index=sex_column,
-                                    columns=smoker_column,
+                                    index=sex_categories,
+                                    columns=smoking_categories,
                                     fill_value=0
                                 )
     smoking_perc =(
@@ -252,22 +254,27 @@ def calculate_power_simulation(smoker_fraction, smoker_mean, smoker_std, non_smo
         return pd.DataFrame(power_rows)
 
 
+def prepare_regression_data(df, predictors):
+    """Prepare predictor and target data for linear regression."""
+    columns = list(predictors) + [BP_COLUMN]
+    data = df[columns].dropna().copy()
+
+    for column in predictors:
+        if column in BINARY_MAPPINGS:
+            data[column]  = data[column].map(BINARY_MAPPINGS[column])
+            if data[column].isna().any():raise ValueError(f"Unexpected category in {column}")
+
+    X = data[list(predictors)]
+    y = data[BP_COLUMN]
+
+    return X, y
+
+
 def calculate_simple_regression(df, column):
     "Fit a simple linear regression for a numeric predictor."
 
-    data = df[[column, "systolic_bp"]].dropna().copy()
-    
-    binary_columns = {
-    "sex": {"F": 0, "M":1},
-    "smoker" :{"No": 0, "Yes":1}
-    }
-    if column in binary_columns:
-        data[column] = data[column].map(binary_columns[column]
-                                        )
-        if data[column].isna().any():
-            raise ValueError(f"Unexpected category in {column}")
-    X = data[[column]]
-    y = data["systolic_bp"]
+    X, y = prepare_regression_data(df, [column])
+   
     model =LinearRegression()
     model.fit(X, y)
     
@@ -280,23 +287,9 @@ def calculate_multiple_regression(df, predictors=None):
     if predictors is None:
         predictors = ["age", "weight", "smoker"]
 
-    columns = predictors + ["systolic_bp"]
-
-    data = df[columns].dropna().copy()
-
-    binary_columns = {
-            "sex":{"F":0, "M":1},
-            "smoker":{"No":0, "Yes":1}
-        }
-    for column, mapping in binary_columns.items():
-        if column in predictors: 
-            data[column] = data[column].map(mapping)
-
-            if data[column].isna().any():
-                raise ValueError(f"Unexpected category in {column}")
-
-    X = data[predictors].to_numpy()
-    y = data["systolic_bp"].to_numpy()
+    X, y = prepare_regression_data(df, predictors)
+    X = X.to_numpy()
+    y = y.to_numpy()
 
     model = LinearRegression()
     model.fit(X, y)
@@ -305,45 +298,25 @@ def calculate_multiple_regression(df, predictors=None):
 
 
 def calculate_regression_by_sex(df):
-    """Fit a multiple linear regression model for systolic blood pressure."""
-    columns = ["age", "weight", "smoker", "sex", "systolic_bp"]
-    data = df[columns].dropna().copy()
-
-    data["smoker"] = data["smoker"].map({"No":0, "Yes":1})
-    data["sex"] = data["sex"].map({"F":0, "M":1})
-       
-    X = data[["age", "weight", "smoker", "sex"]].to_numpy()
-    y = data["systolic_bp"].to_numpy()
-
-    model =LinearRegression()
-    model.fit(X, y)
-
-    return model, X, y
+    """Fit a multiple linear regression model for systolic blood pressure inkluding sex and smoking status."""
+    predictors = ["age", "weight", "smoker", "sex"]
+    
+    return calculate_multiple_regression(df, predictors)
 
 
 def calculate_regression_with_cholesterol(df):
     """Fit a multiple linear regression model for systolic blood pressure inkluding sex and cholesterol."""
-    columns = ["age", "weight", "smoker", "sex", "cholesterol", "systolic_bp"]
-    data = df[columns].dropna().copy()
-
-    data["smoker"] = data["smoker"].map({"No":0, "Yes":1})
-    data["sex"] = data["sex"].map({"F":0, "M":1})
-       
-    X = data[["age", "weight", "smoker", "sex", "cholesterol"]].to_numpy()
-    y = data["systolic_bp"].to_numpy()
-
-    model =LinearRegression()
-    model.fit(X, y)
-
-    return model, X, y
+    predictors = ["age", "weight", "smoker", "sex", "cholesterol"]
+    
+    return calculate_multiple_regression(df, predictors)
 
 
 def calculate_smoking_sex_interaction(df):
     """Test whether the smoking-BP association differs by sex."""
     import statsmodels.formula.api as smf
     data = df[["age","weight","smoker","sex","systolic_bp"]].dropna().copy()
-    data["smoker_num"] = data["smoker"].map({"No":0, "Yes":1})
-    data["male"] = data["sex"].map({"F":0, "M":1})
+    data["smoker_num"] = data["smoker"].map(BINARY_MAPPINGS["smoker"])
+    data["male"] = data["sex"].map(BINARY_MAPPINGS["sex"])
     data["smoker_male"] = data["smoker_num"]*data["male"]
 
     model =smf.ols("systolic_bp ~ age +weight +smoker_num + male+ smoker_male", data=data).fit()

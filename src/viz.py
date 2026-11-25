@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from src.styles import style_axis
+from src.styles import style_axis, SEX_COLORS, SMOKING_COLORS, COLORS
+from src.config import SEX_LABELS, SMOKER_LABELS, SEX_COLUMN, SMOKER_COLUMN
+
 
 def plot_histogram(ax, bin_centers, values, bin_width, color, ylabel, title, mean, median,):
     "Plot a blood pressure histograf with summary statistics, inkludes reference lines for the mean and median, a shaded blood pressure interval"
@@ -43,7 +45,7 @@ def plot_histogram(ax, bin_centers, values, bin_width, color, ylabel, title, mea
     ax.grid(axis="y", alpha=0.3)
 
 
-def plot_boxplot(ax, weight_groups, weight_labels, sex_column, sex_colors, colors, median_weight_by_sex,):
+def plot_boxplot(ax, weight_groups, weight_labels, sex_categories, sex_colors, colors, median_weight_by_sex,):
     """Plot weight distributions by sex using boxplots"""
     weight_box = ax.boxplot(
         weight_groups,
@@ -62,14 +64,14 @@ def plot_boxplot(ax, weight_groups, weight_labels, sex_column, sex_colors, color
         },
     )
 
-    for patch, sex in zip(weight_box["boxes"], sex_column):
+    for patch, sex in zip(weight_box["boxes"], sex_categories):
         patch.set(
             facecolor=sex_colors[sex], 
                                 alpha=0.6,
                                 edgecolor=sex_colors[sex],
                                 linewidth=1.5,
         )
-    for pos, sex in enumerate(sex_column, start=1):
+    for pos, sex in enumerate(sex_categories, start=1):
             median = median_weight_by_sex.loc[sex]
 
             ax.annotate(
@@ -91,16 +93,13 @@ def plot_boxplot(ax, weight_groups, weight_labels, sex_column, sex_colors, color
             ax.set_yticks(range(0, 131, 10))
 
                
-def plot_smoking_status(ax, smoking_all_counts, smoker_column, smoking_colors, colors):
+def plot_smoking_status(ax, smoking_all_counts, smoking_categories, smoking_colors, colors):
      """Plot the distribution of smoking status in the dataset - displays counts and percentages for smokers and non-smokers.
         Arg: smoking_all_counts - number of people in each smoking category"""
-     smoking_labels = {
-          "No": "Icke-rökare",
-          "Yes": "Rökare",
-     }
+     
      total = smoking_all_counts.sum()
 
-     for idx, status in enumerate(smoker_column):
+     for idx, status in enumerate(smoking_categories):
           count = int(smoking_all_counts.loc[status])
           ax.barh(
                idx,
@@ -119,8 +118,8 @@ def plot_smoking_status(ax, smoking_all_counts, smoker_column, smoking_colors, c
           )
 
           ax.set_yticks(
-               range(len(smoker_column)),
-               [smoking_labels[status] for status in smoker_column],
+               range(len(smoking_categories)),
+               [SMOKER_LABELS[status] for status in smoking_categories],
           )
 
           ax.invert_yaxis()
@@ -131,22 +130,19 @@ def plot_smoking_status(ax, smoking_all_counts, smoker_column, smoking_colors, c
                )
 
 
-def plot_smoking_by_sex(axes, smoking_counts, smoking_perc, sex_column, smoker_column, smoking_colors, colors,):
+def plot_smoking_by_sex(axes, smoking_counts, smoking_perc, sex_categories, smoking_categories, smoking_colors, colors,):
      """Plot smoking status distributions separetly by sex, two charts show absolute counts and percentages within each sex category"""
-     smoking_labels = {
-          "No": "Icke-rökare",
-          "Yes": "Rökare",
-     }
-     sex_names = ["Kvinnor", "Män"]
-     sex_positions = np.arange(len(sex_column))
+     
+     sex_names = [SEX_LABELS[sex] for sex in sex_categories]
+     sex_positions = np.arange(len(sex_categories))
 
      for axis, table, subtitle, xlabel, is_percent in [
           (axes[0], smoking_counts, "Antal", "Antal personer", False),
           (axes[1], smoking_perc, "Andel inom kön", "Andel (%)", True)
      ]:
-          left = np.zeros(len(sex_column))
+          left = np.zeros(len(sex_categories))
 
-          for status in smoker_column:
+          for status in smoking_categories:
                widths = table[status].to_numpy()
 
                bars = axis.barh(
@@ -155,7 +151,7 @@ def plot_smoking_by_sex(axes, smoking_counts, smoking_perc, sex_column, smoker_c
                     left=left,
                     height=0.52,
 
-                 label=smoking_labels[status],
+                 label=SMOKER_LABELS[status],
                  color=smoking_colors[status],
                )
                for bar, value in zip(bars, widths):
@@ -218,64 +214,6 @@ def plot_bootstrap_stability(ax, bootstrap_check_sizes, bootstrap_ci_changes, st
     style_axis(ax)
 
 
-def plot_age_vs_bp(df):
-      "Plot the ralationship between age and systolic blood pressure."
-      fig, ax = plt.subplots(figsize=(9, 5))
-
-      ax.scatter(
-            df["age"],
-            df["systolic_bp"],
-            alpha=0.4,
-            color="steelblue"
-      )
-
-      ax.set_title("Samband mellan ålder och systoliskt blodtryck")
-      ax.set_xlabel("Ålder (år)")
-      ax.set_ylabel("Systoliskt blodtryck (mmHg)")
-      ax.grid(alpha=0.3)
-
-      plt.tight_layout()
-      plt.show()
-
-
-def plot_weight_vs_bp(df):
-      "Plot the ralationship between age and systolic blood pressure."
-      fig, ax = plt.subplots(figsize=(9, 5))
-
-      ax.scatter(
-            df["weight"],
-            df["systolic_bp"],
-            alpha=0.4,
-            color="steelblue"
-      )
-
-      ax.set_title("Samband mellan vikt och systoliskt blodtryck")
-      ax.set_xlabel("Vikt (kg)")
-      ax.set_ylabel("Systoliskt blodtryck (mmHg)")
-      ax.grid(alpha=0.3)
-
-      plt.tight_layout()
-      plt.show()
-
-def plot_cholesterol_vs_bp(df):
-      "Plot the ralationship between cholesterol and systolic blood pressure."
-      fig, ax = plt.subplots(figsize=(9, 5))
-
-      ax.scatter(
-            df["cholesterol"],
-            df["systolic_bp"],
-            alpha=0.4,
-            color="steelblue"
-      )
-
-      ax.set_title("Samband mellan cholesterol och systoliskt blodtryck")
-      ax.set_xlabel("Cholesterol ()")
-      ax.set_ylabel("Systoliskt blodtryck (mmHg)")
-      ax.grid(alpha=0.3)
-
-      plt.tight_layout()
-      plt.show()
-
 def plot_regression_predictions(y_true, y_pred):
     """Compare observed and predicted blood pressure values, includes a diagonal reference line
         representing perfect predictions.
@@ -285,7 +223,7 @@ def plot_regression_predictions(y_true, y_pred):
         """
     fig, ax = plt.subplots(figsize=(7,6))
     ax.scatter(
-        y_true, y_pred, alpha=0.4, color="steelblue")
+        y_true, y_pred, alpha=0.4, color=COLORS["pca_primary"])
     minimum = min(y_true.min(), y_pred.min())
     maximum = max(y_true.max(), y_pred.max())
         
@@ -321,12 +259,12 @@ def plot_bp_relationship(ax, df, column, xlabel, categories=None):
                 y= data["systolic_bp"].to_numpy()
                 ax.scatter( x, y,                
                                 alpha=0.4,
-                                color="steelblue"
+                                color=COLORS["blood_pressure"]
                                 )
                 slope, intercept = np.polyfit(x, y, 1)
                 x_line = np.linspace(x.min(), x.max(), 100)
                 y_line = slope * x_line + intercept
-                ax.plot(x_line, y_line, color ="firebrick", linewidth= 2, label="linjär regressionlinje"), 
+                ax.plot(x_line, y_line, color=COLORS["regression_line"], linewidth=2, label="linjär regressionlinje"), 
                 
     else:
                 groups = [data.loc[
@@ -344,12 +282,10 @@ def plot_bp_relationship(ax, df, column, xlabel, categories=None):
 
                 ax.set_xticks(range(1, len(categories) + 1))
 
-                labels = {"F":"Kvinnor",
-                        "M":"Män",
-                        "No":"Icke-rökare",
-                        "Yes":"Rökare"}
+                category_labels = {**SEX_LABELS,
+                        **SMOKER_LABELS}
 
-                ax.set_xticklabels([labels.get(category, category) for category in categories]
+                ax.set_xticklabels([category_labels.get(category, category) for category in categories]
                                 )
                 
     ax.set_xlabel(xlabel)
@@ -369,8 +305,8 @@ def plot_bp_overview(df):
             (axes[0, 1], "height", "Längd (cm)", None, "Längd"),
             (axes[1, 0], "weight", "Vikt (kg)", None, "Vikt"),
             (axes[1, 1], "cholesterol", "Kolesterol", None, "Kolesterol"),
-            (axes[2, 0], "sex", "Kön", ["F", "M"], "Kön"),
-            (axes[2, 1], "smoker", "Rökstatus",["No", "Yes"], "Rökstatus"),
+            (axes[2, 0], "sex", "Kön", SEX_COLUMN, "Kön"),
+            (axes[2, 1], "smoker", "Rökstatus", SMOKER_COLUMN, "Rökstatus"),
       ]
 
       for ax, column, xlabel, categories, title in plots:
@@ -430,7 +366,7 @@ def plot_pca_variance(pca):
 
     fig, ax = plt.subplots(figsize=(8, 5))
 
-    ax.bar(components, variance, color="steelblue")
+    ax.bar(components, variance, color=COLORS["pca_primary"])
 
     for i, value in enumerate(variance):
             ax.text(i, value + 0.5, f"{value:.1f}%", ha="center")
@@ -451,7 +387,7 @@ def plot_pca_scores(X_pca, pca):
 
     fig, ax = plt.subplots(figsize=(9,6))
 
-    ax.scatter(X_pca[:, 0], X_pca[:, 1], alpha=0.5, s=25, color="steelblue")
+    ax.scatter(X_pca[:, 0], X_pca[:, 1], alpha=0.5, s=25, color=COLORS["pca_primary"])
 
     variance = pca.explained_variance_ratio_ * 100
     ax.set_title("Observationer i PCA-rummet")
@@ -459,74 +395,66 @@ def plot_pca_scores(X_pca, pca):
     ax.set_xlabel(f"PC1 ({variance[0]:.1f}% förklarad varians)")
     ax.set_ylabel(f"PC2 ({variance[1]:.1f}% förklarad varians)")
 
-    ax.axhline(0, color="gray", alpha=0.4)
-    ax.axvline(0, color="gray", alpha=0.4)
+    ax.axhline(0, color=COLORS["pca_reference"], alpha=0.4)
+    ax.axvline(0, color=COLORS["pca_reference"], alpha=0.4)
 
     ax.grid(alpha=0.2)
 
     fig.tight_layout()
 
     return fig, ax
+
+
+def plot_pca_by_category(X_pca, pca, group_values, category_order, labels, colors, title, legend_title):
+    """Visualize PCA observations grouped by a categorical variable."""
+    fig, ax = plt.subplots(figsize=(9,6))
+    group_values = np.asarray(group_values)
+
+    for category in category_order:
+        mask = group_values == category
+
+        ax.scatter(X_pca[mask, 0], X_pca[mask, 1], alpha=0.5, s=25, color=colors[category], label=labels[category])
+    
+    variance = pca.explained_variance_ratio_ * 100
+    ax.set_title(title)
+    ax.set_xlabel(f"PC1 ({variance[0]:.1f}% förklarad varians)")
+    ax.set_ylabel(f"PC2 ({variance[1]:.1f}% förklarad varians)")
+    
+    ax.axhline(0, color=COLORS["pca_reference"], alpha=0.4)
+    ax.axvline(0, color=COLORS["pca_reference"], alpha=0.4)
+    
+    ax.grid(alpha=0.2)
+    ax.legend(title=legend_title)
+    fig.tight_layout()
+    
+    return fig, ax
+
 
 def plot_pca_by_sex(X_pca, pca, sex):
     """Visualize PCA observations grouped by sex."""
 
-    fig, ax = plt.subplots(figsize=(9,6))
-
-    groups = [
-          ("F", "Kvinnor", "darkorange"),
-          ("M", "Män", "steelblue")
-    ]
-
-    for category, label, color in groups:
-        mask = sex == category
- 
-        ax.scatter(X_pca[mask, 0], X_pca[mask, 1], alpha=0.5, s=25, color=color, label=label)
-
-    variance = pca.explained_variance_ratio_ * 100
-    ax.set_title("PCA - fördelning efter kön")
-
-    ax.set_xlabel(f"PC1 ({variance[0]:.1f}% förklarad varians)")
-    ax.set_ylabel(f"PC2 ({variance[1]:.1f}% förklarad varians)")
-
-    ax.axhline(0, color="gray", alpha=0.4)
-    ax.axvline(0, color="gray", alpha=0.4)
-
-    ax.grid(alpha=0.2)
-    ax.legend(title="Kön")
-    fig.tight_layout()
-
-    return fig, ax
+    return plot_pca_by_category(
+          X_pca=X_pca,
+          pca=pca,
+          group_values=sex,
+          category_order=SEX_COLUMN,
+          labels=SEX_LABELS,
+          colors=SEX_COLORS,
+          title="PCA - fördelning efter kön.",
+          legend_title="Kön")
 
 def plot_pca_by_smoker(X_pca, pca, smoker):
     """Visualize PCA observations grouped by rökningstatus."""
 
-    fig, ax = plt.subplots(figsize=(9,6))
-
-    groups = [
-          ("Yes", "Rökare", "darkorange"),
-          ("No", "Icke-rökare", "steelblue")
-    ]
-
-    for category, label, color in groups:
-        mask = smoker == category
- 
-        ax.scatter(X_pca[mask, 0], X_pca[mask, 1], alpha=0.5, s=25, color=color, label=label)
-
-    variance = pca.explained_variance_ratio_ * 100
-    ax.set_title("PCA - fördelning efter rökstatus")
-
-    ax.set_xlabel(f"PC1 ({variance[0]:.1f}% förklarad varians)")
-    ax.set_ylabel(f"PC2 ({variance[1]:.1f}% förklarad varians)")
-
-    ax.axhline(0, color="gray", alpha=0.4)
-    ax.axvline(0, color="gray", alpha=0.4)
-
-    ax.grid(alpha=0.2)
-    ax.legend(title="Rökstatus")
-    fig.tight_layout()
-
-    return fig, ax
+    return plot_pca_by_category(
+              X_pca=X_pca,
+              pca=pca,
+              group_values=smoker,
+              category_order=SMOKER_COLUMN,
+              labels=SMOKER_LABELS,
+              colors=SMOKING_COLORS,
+              title="PCA - fördelning efter rökstatus.",
+              legend_title="Rökstatus")
 
 
 def plot_pca_biplot(X_pca, pca, columns):
@@ -534,7 +462,7 @@ def plot_pca_biplot(X_pca, pca, columns):
  
     fig, ax = plt.subplots(figsize=(10, 7))
 
-    ax.scatter(X_pca[:, 0], X_pca[:, 1], alpha=0.25, s=20, color="steelblue")
+    ax.scatter(X_pca[:, 0], X_pca[:, 1], alpha=0.25, s=20, color=COLORS["pca_primary"])
 
     loadings = pca.components_[:2, :].T
     scale = (0.65 * np.percentile(np.abs(X_pca[:, :2]), 95) / np.max(np.abs(loadings)))
@@ -545,24 +473,33 @@ def plot_pca_biplot(X_pca, pca, columns):
             "systolic_bp": "Systoliskt blodtryck",
             "height": "Längd"
             }
+    label_offsets = {
+                        "age":(8, -12),
+                        "cholesterol": (-15, 15),
+                        "weight": (8, 12),
+                        "systolic_bp": (15, -15),
+                        "height": (-20, 15)
+                        }
     for i, column in enumerate(columns):
         x = loadings[i, 0] * scale
         y = loadings[i, 1] * scale
 
         ax.annotate("", xy=(x, y),
                     xytext=(0, 0),
-                    arrowprops=dict(arrowstyle="->", color="firebrick", lw=2,))
-        ax.text(x * 1.12, y * 1.12, labels.get(column, column),
-                color="firebrick",
-                ha ="center", fontsize=10)
+                    arrowprops=dict(arrowstyle="->", color=COLORS["pca_loading"], alpha=0.5, lw=2)
+                    )
+        ax.annotate(labels.get(column, column), xy=(x, y), xytext=label_offsets.get(column, (8, 8)), 
+                    textcoords="offset points", color=COLORS["pca_loading"], 
+                    fontsize=10, bbox=dict(facecolor="white", alpha=0.75, edgecolor="none", pad=1))
+        
     variance = pca.explained_variance_ratio_ * 100
     ax.set_title("PCA - biplot - observationer och variabler")
  
     ax.set_xlabel(f"PC1 ({variance[0]:.1f}% förklarad varians)")
     ax.set_ylabel(f"PC2 ({variance[1]:.1f}% förklarad varians)")
  
-    ax.axhline(0, color="gray", alpha=0.4)
-    ax.axvline(0, color="gray", alpha=0.4)
+    ax.axhline(0, color=COLORS["pca_reference"], alpha=0.4)
+    ax.axvline(0, color=COLORS["pca_reference"], alpha=0.4)
  
     ax.grid(alpha=0.2)
     

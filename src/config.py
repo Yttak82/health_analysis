@@ -3,6 +3,8 @@ ALPHA = 0.05
 BP_COLUMN = "systolic_bp"
 SEX_COLUMN = ["F", "M"]
 SMOKER_COLUMN = ["No", "Yes"]
+SEX_LABELS = {"F": "Kvinnor", "M": "Män"}
+SMOKER_LABELS = {"No": "Icke-rökare", "Yes": "Rökare"}
 SIM_GROUP_SIZE = 1000
 N_BOOTSTRAP = 50000
 BOOTSTRAP_START = 500
@@ -19,6 +21,15 @@ EXPECTED_DATATYPES = {
     "systolic_bp": "float",
     "cholesterol": "float",
     "smoker":"str",
-    "disease": "int",
-           
+    "disease": "int",           
+}
+
+BINARY_MAPPINGS = {
+    "sex": {"F": 0,
+            "M": 1
+    },
+    "smoker": {
+        "No": 0, 
+        "Yes": 1
+    }
 }
