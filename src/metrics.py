@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import statsmodels.api as sm
 from scipy import stats
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split, KFold, cross_validate
@@ -296,6 +297,30 @@ def calculate_multiple_regression(df, predictors=None):
 
     return model, X, y
 
+
+def calculate_regression_inference(df, predictors, alpha=0.05):
+    """Calculate regression coefficients, p-values and confidence intervals using OLS"""
+    X, y = prepare_regression_data(df, predictors)
+
+    X = sm.add_constant(X.astype(float))
+    model = sm.OLS(y.astype(float),X).fit()
+
+    ci = model.conf_int(alpha=alpha)
+
+    results = pd.DataFrame({
+        "Koefficient": model.params,
+        "Standartfel": model.bse,
+        "t-värde": model.tvalues,
+        "p-värde": model.pvalues,
+        "Nedre KI": ci[0],
+        "Övre KI": ci[1],
+        "Signifikant": np.select([model.pvalues < alpha,
+        model.pvalues >=alpha],
+        ["Ja", "Nej"], 
+        default="Ej bedömbart")
+        })
+    
+    return model, results
 
 def calculate_regression_by_sex(df):
     """Fit a multiple linear regression model for systolic blood pressure inkluding sex and smoking status."""
